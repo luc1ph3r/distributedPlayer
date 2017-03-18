@@ -61,7 +61,7 @@ function updateTimes(newTime) {
     logger.info({times, currentTime}, 'update times info');
 }
 
-const sockServer = sockjs.createServer({ sockjs_url: 'http://127.0.0.1/js/sockjs.min.js' });
+const sockServer = sockjs.createServer({ sockjs_url: 'http://theroom.luc1ph3r.com/js/sockjs.min.js' });
 sockServer.on('connection', conn => {
     const connectionId = uuid.v4();
     connections[connectionId] = conn;
@@ -111,4 +111,4 @@ sockServer.on('connection', conn => {
 
 const server = http.createServer();
 sockServer.installHandlers(server, { prefix: '/echo' });
-server.listen(9999, '127.0.0.1');
+server.listen(1234, '127.0.0.1');
