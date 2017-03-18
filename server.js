@@ -31,7 +31,7 @@ function send(connection, data) {
 }
 
 function updateTimes(newTime) {
-    times.push(newTime);
+    times.push(newTime + 5);
     times = times.slice(-3); // last 3 elements
 
     if (times.length === 3) {
