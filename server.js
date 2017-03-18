@@ -30,35 +30,39 @@ function send(connection, data) {
     connection.write(JSON.stringify(data));
 }
 
+// function updateTimes(newTime) {
+//     times.push(newTime + 5);
+//     times = times.slice(-3); // last 3 elements
+
+//     if (times.length === 3) {
+//         const variance12 = Math.abs(times[0] - times[1]);
+//         const variance23 = Math.abs(times[1] - times[2]);
+//         const variance13 = Math.abs(times[0] - times[2]);
+
+//         const maxVariance = Math.max(variance12, variance23, variance13);
+//         const minVariance = Math.min(variance12, variance23, variance13);
+
+//         if (maxVariance > 2) {
+//             // leave only times with minimum variance
+//             if (minVariance === variance12) {
+//                 times = [times[0], times[1]];
+//             };
+//             if (minVariance === variance23) {
+//                 times = [times[1], times[2]];
+//             };
+//             if (minVariance === variance13) {
+//                 times = [times[0], times[2]];
+//             };
+//         }
+//     }
+
+//     currentTime = times.reduce((acc, val) => acc + val, 0) / times.length;
+
+//     logger.info({times, currentTime}, 'update times info');
+// }
+
 function updateTimes(newTime) {
-    times.push(newTime + 5);
-    times = times.slice(-3); // last 3 elements
-
-    if (times.length === 3) {
-        const variance12 = Math.abs(times[0] - times[1]);
-        const variance23 = Math.abs(times[1] - times[2]);
-        const variance13 = Math.abs(times[0] - times[2]);
-
-        const maxVariance = Math.max(variance12, variance23, variance13);
-        const minVariance = Math.min(variance12, variance23, variance13);
-
-        if (maxVariance > 2) {
-            // leave only times with minimum variance
-            if (minVariance === variance12) {
-                times = [times[0], times[1]];
-            };
-            if (minVariance === variance23) {
-                times = [times[1], times[2]];
-            };
-            if (minVariance === variance13) {
-                times = [times[0], times[2]];
-            };
-        }
-    }
-
-    currentTime = times.reduce((acc, val) => acc + val, 0) / times.length;
-
-    logger.info({times, currentTime}, 'update times info');
+    currentTime = newTime + 5;
 }
 
 const sockServer = sockjs.createServer({ sockjs_url: 'http://theroom.luc1ph3r.com/js/sockjs.min.js' });
