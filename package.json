@@ -12,5 +12,10 @@
     "bunyan": "^1.8.8",
     "sockjs": "^0.3.18",
     "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "video.js": "^5.19.1",
+    "videojs-playlist": "^3.1.0",
+    "videojs-playlist-ui": "^3.0.3"
   }
 }
