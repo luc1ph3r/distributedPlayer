@@ -43,3 +43,11 @@
     padding-left: 10em !important;
 }
 
+.vjs-up-next .vjs-up-next-text {
+    padding-left: 4.5em !important;
+}
+
+.vjs-mouse.vjs-playlist .vjs-selected .vjs-playlist-thumbnail
+.vjs-playlist-now-playing {
+    padding-left: 3.5em !important;
+}
