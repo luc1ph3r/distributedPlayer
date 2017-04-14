@@ -124,6 +124,45 @@ function socketLogic() {
 }
 
 $(document).ready(function() {
-    player = document.getElementById('player');
-    var sock = socketLogic();
+    player = videojs(document.querySelector('.video-js'), {
+        fluid: true
+    }, function() {
+        // video is initialized
+    });
+
+    player.playlistUi({className: 'vjs-playlist'});
+    player.playlist([
+        {
+            name: 'Disney\'s Oceans',
+            description: 'Explore the depths of our planet\'s oceans. ',
+            duration: 45,
+            sources: [{
+                src: '//vjs.zencdn.net/v/oceans.mp4',
+                type: 'video/mp4'
+            }],
+            poster: '//vjs.zencdn.net/v/oceans.png',
+            thumbnail: [
+                {
+                    src: '//vjs.zencdn.net/v/oceans.png'
+                }
+            ]
+        },
+        {
+            sources: [{
+                src: '/Barakamon/Barakamon11.mkv',
+                type: 'video/mp4'
+            }],
+            textTracks:[{
+                kind: 'captions',
+                label: 'Russian',
+                src: '/Barakamon/subs/vtt/Barakamon 11.vtt',
+                default: false
+            }]
+        }
+    ]);
+
+    // Play through the playlist automatically.
+    player.playlist.autoadvance(0);
+
+    // var sock = socketLogic();
 });
