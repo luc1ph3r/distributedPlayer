@@ -124,30 +124,28 @@ function socketLogic() {
 }
 
 $(document).ready(function() {
-    player = videojs(document.querySelector('.video-js'), {
+    var playerObject = videojs(document.querySelector('.video-js'), {
         fluid: true
     }, function() {
         // video is initialized
     });
 
-    player.playlistUi({className: 'vjs-playlist'});
-    player.playlist([
+    playerObject.playlistUi({className: 'vjs-playlist'});
+    playerObject.playlist([
         {
-            name: 'Disney\'s Oceans',
-            description: 'Explore the depths of our planet\'s oceans. ',
-            duration: 45,
+            name: 'The Room',
+            duration: 5975,
             sources: [{
-                src: '//vjs.zencdn.net/v/oceans.mp4',
+                src: '/TheRoom.mp4',
                 type: 'video/mp4'
             }],
-            poster: '//vjs.zencdn.net/v/oceans.png',
-            thumbnail: [
-                {
-                    src: '//vjs.zencdn.net/v/oceans.png'
-                }
-            ]
+            thumbnail: [{
+                src: 'https://i.ytimg.com/vi/Nd5XpcKBCI8/maxresdefault.jpg'
+            }]
         },
         {
+            name: 'Barakamon 11',
+            duration: 1372,
             sources: [{
                 src: '/Barakamon/Barakamon11.mkv',
                 type: 'video/mp4'
@@ -156,13 +154,17 @@ $(document).ready(function() {
                 kind: 'captions',
                 label: 'Russian',
                 src: '/Barakamon/subs/vtt/Barakamon 11.vtt',
-                default: false
+                default: true
+            }],
+            thumbnail: [{
+                src: '/Barakamon/11.png'
             }]
         }
     ]);
 
     // Play through the playlist automatically.
-    player.playlist.autoadvance(0);
+    playerObject.playlist.autoadvance(0);
 
-    // var sock = socketLogic();
+    player = document.querySelector('#player video');
+    var sock = socketLogic();
 });

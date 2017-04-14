@@ -18,12 +18,25 @@
     <link rel="stylesheet" href="/css/player.css">
 </head>
 <body>
-    <section class="player">
+    <section class="player" id="player">
         <video class="video-js" preload="auto" tabindex="-1" controls="">
         </video>
         <div class="playlist-container">
             <ol class="vjs-playlist"></ol>
         </div>
-</section>
+    </section>
+
+    <div class="controls">
+        Go to time: <input id="goToTimeInput" type="text" placeholder="HH:MM:SS">
+        <button id="goToTimeBtn">
+            Set time for all members
+        </button>
+    </div>
+    <div class="info">
+        current state:
+        <span id="connectionState" style="color: red;">
+            not connected
+        </span>
+    </div>
 </body>
 </html>
