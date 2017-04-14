@@ -11,7 +11,7 @@
 .video-js {
     flex: 3 1 70%;
     height: 100%;
-    min-width: 400px;
+    min-width: 300px;
 }
 
 .playlist-container {
@@ -32,3 +32,14 @@
 .video-js.vjs-16-9, .video-js.vjs-4-3, .video-js.vjs-fluid {
     height: 100%;
 }
+
+.vjs-playlist img {
+    display: inline-block;
+    width: 10em;
+    height: auto;
+}
+
+.vjs-playlist-name {
+    padding-left: 10em !important;
+}
+
