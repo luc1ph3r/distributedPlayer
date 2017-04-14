@@ -1,3 +1,16 @@
  To do:
-   ☐ usernames / ids
-   ☐ the journal of all actions in time (<id, action, time>)
+   Frontend:
+     ☐
+   Backend:
+     ☐ Change 5 sec jump to 0
+     ☐ better sync algorithm
+   Both:
+     ☐ usernames / ids
+     ☐ the journal of all actions in time (<id, action, time>)
+     ☐ playlist handlers (change the video when somebody moved to another)
+
+ Bugs:
+   UI:
+     ☐ in vertical mode, video width is greater than playlist's
+   UX:
+   Backend:
