@@ -11,6 +11,7 @@ const logger = bunyan.createLogger({
 let currentTime = 0;
 let times = [];
 let connections = {};
+let lastState = 'pause';
 
 function sendToAll(data) {
     for (let id in connections) {
@@ -65,7 +66,7 @@ function updateTimes(newTime) {
     currentTime = newTime + 5;
 }
 
-const sockServer = sockjs.createServer({ sockjs_url: 'http://theroom.luc1ph3r.com/js/sockjs.min.js' });
+const sockServer = sockjs.createServer();
 sockServer.on('connection', conn => {
     const connectionId = uuid.v4();
     connections[connectionId] = conn;
