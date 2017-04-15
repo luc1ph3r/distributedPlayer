@@ -110,12 +110,6 @@ function socketLogic() {
             type: 'pause'
         });
     };
-    timeUpdateListener = function(event) {
-        sock.send({
-            type  : 'setTime',
-            value : event.target.currentTime
-        });
-    };
 
     player.addEventListener('play',  playListener);
     player.addEventListener('pause', pauseListener);
