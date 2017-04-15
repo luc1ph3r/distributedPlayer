@@ -1,6 +1,9 @@
  To do:
    Frontend:
-     ☐
+       UI:
+         ☐
+       UX:
+         ☐
    Backend:
      ☐ Change 5 sec jump to 0
      ☐ better sync algorithm
@@ -10,7 +13,10 @@
      ☐ playlist handlers (change the video when somebody moved to another)
 
  Bugs:
-   UI:
-     ☐ in vertical mode, video width is greater than playlist's
-   UX:
+   Frontend:
+       UI:
+         ☐ in vertical mode, video width is greater than playlist's
+         ☐ then changing video's current time (through controllers), it starts "shaking"
+       UX:
    Backend:
+   Both:
