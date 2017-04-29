@@ -161,4 +161,13 @@ $(document).ready(function() {
 
     player = document.querySelector('#player video');
     var sock = socketLogic();
+
+    $('#player').keypress(function(e) {
+        if (e.which === 32) { // space
+            e.preventDefault();
+            player.paused
+                ? player.play()
+                : player.pause();
+        }
+    });
 });
