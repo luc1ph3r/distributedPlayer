@@ -93,7 +93,7 @@ sockServer.on('connection', conn => {
             currentTime = message.value;
             times = [message.value];
 
-            sendToAll({
+            sendToOthers(connectionId, {
                 type  :  'setTime',
                 value : message.value
             });

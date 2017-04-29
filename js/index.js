@@ -38,8 +38,7 @@ function socketMessage(event) {
         }
 
         if (action.type === 'setTime') {
-            console.log('setTime: ' + action.value);
-
+            setTimeByServer = true;
             player.currentTime = action.value;
         }
     }
@@ -55,6 +54,8 @@ function socketClosed(reconnectInterval, updateTimeInterval, sock) {
 
 var playListener;
 var pauseListener;
+var seekingListener;
+var setTimeByServer = false;
 
 function socketLogic() {
     var sock = new SockJS(sockURL);
@@ -99,6 +100,9 @@ function socketLogic() {
     if (pauseListener) {
         player.removeEventListener('pause', pauseListener);
     }
+    if (seekingListener) {
+        player.removeEventListener('seeking', pauseListener);
+    }
 
     playListener = function(event) {
         sock.send({
@@ -110,9 +114,20 @@ function socketLogic() {
             type: 'pause'
         });
     };
+    seekingListener = function(event) {
+        if (! setTimeByServer) {
+            sock.send({
+                type  : 'setTime',
+                value : player.currentTime
+            });
+        }
 
-    player.addEventListener('play',  playListener);
-    player.addEventListener('pause', pauseListener);
+        setTimeByServer = false;
+    };
+
+    player.addEventListener('play',    playListener);
+    player.addEventListener('pause',   pauseListener);
+    player.addEventListener('seeking', seekingListener);
 
     return sock;
 }
@@ -168,6 +183,21 @@ $(document).ready(function() {
             player.paused
                 ? player.play()
                 : player.pause();
+        }
+    });
+
+    $('.he_fucked_up').on('click', this, function() {
+        var $this     = $(this);
+        var $controls = $('.controls').removeClass('hidden');
+
+        if ($this.hasClass('hide')) {
+            $this.text('If no fucking thing is working');
+            $this.removeClass('hide');
+            $controls.addClass('hidden');
+        } else {
+            $this.text('Hide controls');
+            $this.addClass('hide');
+            $('.controls').removeClass('hidden');
         }
     });
 });
