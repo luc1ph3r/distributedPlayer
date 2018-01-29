@@ -16,6 +16,7 @@ class PlayerServer {
                 pause: 'pause',
                 seeking: 'seeking',
                 seeked: 'seeked',
+                ready: 'ready',
             },
             SERVER: {
                 play: 'play',
@@ -55,8 +56,10 @@ class PlayerServer {
         });
 
         if (this.numberOfReadyParticipants >= numberOfParticipants) {
+            logger.info('Sending a ready event to clients');
+
             this.sendToAll({
-                type: STATES.PLAYER.ready,
+                type: this.STATES.PLAYER.ready,
             });
 
             this.currentState = null;
@@ -80,9 +83,9 @@ class PlayerServer {
             }
 
             if (this.STATES.SERVER.init === message.type) {
-                logger.info({connectionId}, this.STATES.SERVER.init);
+                logger.info({connectionId}, 'Got an init event');
 
-                this.send(conn, {
+                this.send(connectionId, {
                     type  : this.STATES.SERVER.setTime,
                     value : this.currentTime
                 });
@@ -91,16 +94,22 @@ class PlayerServer {
             if (this.STATES.SERVER.play === message.type ||
                 this.STATES.SERVER.pause === message.type
             ) {
+                logger.info({connectionId}, 'Got a play/pause event');
+
                 this.sendToOthers(connectionId, {
                     type: message.type
                 });
             }
 
             if (this.STATES.SERVER.updateTimeInfo === message.type) {
+                // logger.info({connectionId}, 'Got an updateTimeInfo event');
+
                 this.updateTimes(message.value);
             }
 
             if (this.STATES.SERVER.setTime === message.type) {
+                logger.info({connectionId}, 'Got a setTime event');
+
                 this.currentState = this.STATES.SERVER.waiting;
 
                 this.sendToOthers(connectionId, {
@@ -110,19 +119,22 @@ class PlayerServer {
             }
 
             if (this.STATES.SERVER.ready === message.type) {
+                logger.info({connectionId}, 'Got a ready event');
+
                 this.registerParticipant(connectionId);
             }
         });
 
         conn.on('close', () => {
             delete this.connections[connectionId];
+            delete this.connectionsInfo[connectionId];
         });
     }
 
     sendToAll(data) {
         logger.info({name: 'sendToAll'}, data);
 
-        for (let id in connections)
+        for (let id in this.connections)
             this.connections[id].write(JSON.stringify(data));
     }
 
@@ -130,7 +142,8 @@ class PlayerServer {
         logger.info({name: 'sendToOthers', sourceId}, data);
 
         for (let id in this.connections) {
-            if (id != sourceId) {
+            if (id !== sourceId) {
+                // console.log(this.connections[id]);
                 this.connections[id].write(JSON.stringify(data));
             }
         }

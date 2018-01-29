@@ -42,25 +42,31 @@ var STATES = {
 
 var LISTENERS = {
     play: function(event) {
+        LOG('Sending a play event');
+
         sock.send({
             type: 'play'
         });
     },
     pause: function(event) {
+        LOG('Sending a pause event');
+
         sock.send({
             type: 'pause'
         });
     },
     seeking: function(event) {
-        LOG('seeking');
+        LOG('Sending a seeking event');
 
         sock.send({
             type  : STATES.SERVER.setTime,
             value : player.currentTime
         });
+
+        player.pause();
     },
     seeked: function() {
-        LOG('seeked');
+        LOG('Sending a seeked event');
 
         sock.send({
             type: STATES.SERVER.ready,
@@ -71,13 +77,11 @@ var LISTENERS = {
 var setTimeByServer = false;
 
 function removeStateListener(state) {
-    if (LISTENERS[state])
-        player.removeEventListener(state, LISTENERS[state]);
+    player.removeEventListener(state, LISTENERS[state]);
 }
 
 function addStateListener(state) {
-    if (LISTENERS[state])
-        player.addEventListener(state, LISTENERS[state]);
+    player.addEventListener(state, LISTENERS[state]);
 }
 
 function socketMessage(event) {
@@ -92,11 +96,30 @@ function socketMessage(event) {
         return;
     }
 
-    if (STATES.SERVER.pause === action.type)
-        player.pause();
+    if (STATES.SERVER.pause === action.type) {
+        LOG('Got a pause event');
 
-    if (STATES.SERVER.play === action.type)
-        player.play();
+        removeStateListener(STATES.PLAYER.pause);
+        setTimeout(() => {
+          player.pause();
+
+          setTimeout(() => addStateListener(STATES.PLAYER.pause));
+        });
+    }
+
+    if (STATES.SERVER.play === action.type) {
+        LOG('Got a play event');
+
+        // TODO: WHY doesn't it work without sending all commands
+        // to the end of the event loop?
+
+        removeStateListener(STATES.PLAYER.play);
+        setTimeout(() => {
+            player.play();
+
+            setTimeout(() => addStateListener(STATES.PLAYER.play));
+        });
+    }
 
     if (STATES.SERVER.setTime === action.type) {
         LOG('Got a setTime event');
@@ -188,7 +211,7 @@ $(document).ready(function() {
        name: 'Some video',
        duration: 0,
        sources: [{
-           src: '/media/matt_tom.mp4',
+           src: '/media/god.mp4',
            type: 'video/mp4'
        }],
     });
