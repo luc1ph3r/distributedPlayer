@@ -100,11 +100,8 @@ function socketMessage(event) {
         LOG('Got a pause event');
 
         removeStateListener(STATES.PLAYER.pause);
-        setTimeout(() => {
-          player.pause();
-
-          setTimeout(() => addStateListener(STATES.PLAYER.pause));
-        });
+        player.pause();
+        addStateListener(STATES.PLAYER.pause);
     }
 
     if (STATES.SERVER.play === action.type) {
@@ -114,11 +111,9 @@ function socketMessage(event) {
         // to the end of the event loop?
 
         removeStateListener(STATES.PLAYER.play);
-        setTimeout(() => {
-            player.play();
-
-            setTimeout(() => addStateListener(STATES.PLAYER.play));
-        });
+        player.play()
+        .then(() => addStateListener(STATES.PLAYER.play))
+        .catch(err => addStateListener(STATES.PLAYER.play));
     }
 
     if (STATES.SERVER.setTime === action.type) {
@@ -134,8 +129,9 @@ function socketMessage(event) {
     if (STATES.SERVER.ready === action.type) {
         LOG('Got a ready event');
 
-        player.play();
-        addStateListener(STATES.PLAYER.seeking);
+        player.play()
+        .then(() => addStateListener(STATES.PLAYER.seeking))
+        .catch(err => addStateListener(STATES.PLAYER.seeking));
     }
 }
 
