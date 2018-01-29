@@ -14,9 +14,8 @@ let connections = {};
 let lastState = 'pause';
 
 function sendToAll(data) {
-    for (let id in connections) {
+    for (let id in connections)
         connections[id].write(JSON.stringify(data));
-    }
 }
 
 function sendToOthers(sourceId, data) {
@@ -90,11 +89,8 @@ sockServer.on('connection', conn => {
         }
 
         if (message.type === 'setTime') {
-            currentTime = message.value;
-            times = [message.value];
-
-            sendToOthers(connectionId, {
-                type  :  'setTime',
+            sendToOthers(conn, {
+                type  : 'setTime',
                 value : message.value
             });
         }

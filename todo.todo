@@ -1,3 +1,10 @@
+Ideas:
+    ☐ Then changing a time
+    ☐ pause the video
+    ☐ then issue a seeked event on all nodes
+    ☐ on a server, when all nodes have sent a seeked event, issue a play event
+
+
  To do:
    Frontend:
        UI:

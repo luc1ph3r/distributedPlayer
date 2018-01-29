@@ -19,28 +19,44 @@ function socketOpened(reconnectInterval, updateTimeInterval, sock) {
     }, 5000);
 }
 
+var playListener;
+var pauseListener;
+var seekingListener;
+var setTimeByServer = false;
+
+function removeSeekingListener() {
+    if (seekingListener)
+        player.removeEventListener('seeking', seekingListener);
+}
+
+function addSeekingListener() {
+    if (seekingListener)
+        player.addEventListener('seeking', seekingListener);
+}
+
 function socketMessage(event) {
-    if (event.type === 'message') {
-        var action;
-        try {
-            action = JSON.parse(event.data);
-        } catch(error) {
-            console.error('Failed to parse action: ' + event.data);
-            return;
-        }
+    if (event.type !== 'message')
+        return;
 
-        if (action.type === 'pause') {
-            player.pause();
-        }
+    var action;
+    try {
+        action = JSON.parse(event.data);
+    } catch(error) {
+        console.error('Failed to parse action: ' + event.data);
+        return;
+    }
 
-        if (action.type === 'play') {
-            player.play();
-        }
+    if (action.type === 'pause')
+        player.pause();
 
-        if (action.type === 'setTime') {
-            setTimeByServer = true;
-            player.currentTime = action.value;
-        }
+    if (action.type === 'play')
+        player.play();
+
+    if (action.type === 'setTime') {
+        removeSeekingListener();
+        player.currentTime = action.value;
+        setTimeout(() => addSeekingListener(), 500);
+        // addSeekingListener();
     }
 }
 
@@ -52,13 +68,10 @@ function socketClosed(reconnectInterval, updateTimeInterval, sock) {
     setTimeout(socketLogic, 1000);
 }
 
-var playListener;
-var pauseListener;
-var seekingListener;
-var setTimeByServer = false;
+var sock;
 
 function socketLogic() {
-    var sock = new SockJS(sockURL);
+    sock = new SockJS(sockURL);
 
     sock.oldSend = sock.send;
     sock.send = function(objToSend) { // stringify all sent objects
@@ -77,32 +90,13 @@ function socketLogic() {
         socketClosed(reconnectInterval, updateTimeInterval, sock);
     };
 
-    $('#goToTimeBtn').off('click');
-    $('#goToTimeBtn').click(function() {
-        var hms = $('#goToTimeInput').val().split(':');
-
-        if (! (hms.length && hms.length === 3)) {
-            alert('wrong time format!');
-            return;
-        }
-
-        var nextTime = parseFloat(hms[0]) * 3600 + parseFloat(hms[1]) * 60 +
-                       parseFloat(hms[2]);
-        sock.send({
-            type  : 'setTime',
-            value : nextTime
-        });
-    });
-
-    if (playListener) {
+    if (playListener)
         player.removeEventListener('play', playListener);
-    }
-    if (pauseListener) {
+
+    if (pauseListener)
         player.removeEventListener('pause', pauseListener);
-    }
-    if (seekingListener) {
-        player.removeEventListener('seeking', pauseListener);
-    }
+
+    removeSeekingListener();
 
     playListener = function(event) {
         sock.send({
@@ -115,21 +109,17 @@ function socketLogic() {
         });
     };
     seekingListener = function(event) {
-        if (! setTimeByServer) {
-            sock.send({
-                type  : 'setTime',
-                value : player.currentTime
-            });
-        }
-
-        setTimeByServer = false;
+        sock.send({
+            type  : 'setTime',
+            value : player.currentTime
+        });
+        // TODO
+        console.log('seeking');
     };
 
-    player.addEventListener('play',    playListener);
-    player.addEventListener('pause',   pauseListener);
-    player.addEventListener('seeking', seekingListener);
-
-    return sock;
+    player.addEventListener('play', playListener);
+    player.addEventListener('pause', pauseListener);
+    addSeekingListener();
 }
 
 $(document).ready(function() {
@@ -139,43 +129,43 @@ $(document).ready(function() {
         // video is initialized
     });
 
+    var playlistArray = [];
+    // for (var i = 3; i != 14; ++i) {
+    //     playlistArray.push({
+    //         name: 'Made In Abyss ' + i,
+    //         duration: 0,
+    //         sources: [{
+    //             src: '/media/mia/' + i + '.mp4',
+    //             type: 'video/mp4'
+    //         }],
+    //         textTracks:[{
+    //             kind: 'captions',
+    //             label: 'Russian',
+    //             src: '/media/mia/' + i + '.vtt',
+    //             default: true
+    //         }],
+    //         thumbnail: [{
+    //             src: '/media/mia/abyssbanner.jpg'
+    //         }]
+    //     });
+    // }
+    playlistArray.push({
+       name: 'Some GoPro shit',
+       duration: 0,
+       sources: [{
+           src: '/media/gopro.mp4',
+           type: 'video/mp4'
+       }],
+    });
+
     playerObject.playlistUi({className: 'vjs-playlist'});
-    playerObject.playlist([
-        {
-            name: 'The Room',
-            duration: 5975,
-            sources: [{
-                src: '/TheRoom.mp4',
-                type: 'video/mp4'
-            }],
-            thumbnail: [{
-                src: 'https://i.ytimg.com/vi/Nd5XpcKBCI8/maxresdefault.jpg'
-            }]
-        },
-        {
-            name: 'Barakamon 11',
-            duration: 1372,
-            sources: [{
-                src: '/Barakamon/Barakamon11.mkv',
-                type: 'video/mp4'
-            }],
-            textTracks:[{
-                kind: 'captions',
-                label: 'Russian',
-                src: '/Barakamon/subs/vtt/Barakamon 11.vtt',
-                default: true
-            }],
-            thumbnail: [{
-                src: '/Barakamon/11.png'
-            }]
-        }
-    ]);
+    playerObject.playlist(playlistArray);
 
     // Play through the playlist automatically.
     playerObject.playlist.autoadvance(0);
 
     player = document.querySelector('#player video');
-    var sock = socketLogic();
+    socketLogic();
 
     $('#player').keypress(function(e) {
         if (e.which === 32) { // space
@@ -199,5 +189,22 @@ $(document).ready(function() {
             $this.addClass('hide');
             $('.controls').removeClass('hidden');
         }
+    });
+
+    $('#goToTimeBtn').click(function() {
+        var hms = $('#goToTimeInput').val().split(':');
+
+        if (! (hms.length && hms.length === 3)) {
+            alert('wrong time format!');
+            return;
+        }
+
+        var nextTime = parseFloat(hms[0]) * 3600 + parseFloat(hms[1]) * 60 +
+                       parseFloat(hms[2]);
+
+        sock.send({
+            type  : 'setTime',
+            value : nextTime
+        });
     });
 });
