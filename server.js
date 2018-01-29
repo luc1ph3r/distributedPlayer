@@ -8,27 +8,145 @@ const logger = bunyan.createLogger({
     level: 10
 });
 
-let currentTime = 0;
-let times = [];
-let connections = {};
-let lastState = 'pause';
+class PlayerServer {
+    constructor() {
+        this.STATES = {
+            PLAYER: {
+                play: 'play',
+                pause: 'pause',
+                seeking: 'seeking',
+                seeked: 'seeked',
+            },
+            SERVER: {
+                play: 'play',
+                pause: 'pause',
+                setTime: 'setTime',
+                ready: 'ready',
+                init: 'init',
+                updateTimeInfo: 'updateTimeInfo',
+            },
+        };
 
-function sendToAll(data) {
-    for (let id in connections)
-        connections[id].write(JSON.stringify(data));
-}
+        this.currentTime = 0;
+        this.times = [];
+        this.connections = {};
+        this.connectionsInfo = {};
+        this.currentState = 'pause';
+        this.numberOfReadyParticipants = 0;
+    }
 
-function sendToOthers(sourceId, data) {
-    for (let id in connections) {
-        if (id != sourceId) {
-            connections[id].write(JSON.stringify(data));
+    waitForParticipants() {
+        this.numberOfReadyParticipants = 0;
+    }
+
+    registerParticipant(connectionId) {
+        logger.info({name: 'registerParticipant', connectionId});
+
+        if (!this.connectionsInfo[connectionId].ready) {
+            ++this.numberOfReadyParticipants;
+            this.connectionsInfo[connectionId].ready = true;
         }
+
+        const numberOfParticipants = Object.keys(this.connections).length;
+
+        logger.info({
+            numberOfParticipants,
+            numberOfReadyParticipants: this.nubmerOfReadyParticipants,
+        });
+
+        if (this.numberOfReadyParticipants >= numberOfParticipants) {
+            this.sendToAll({
+                type: STATES.PLAYER.ready,
+            });
+
+            this.currentState = null;
+            for (let id in this.connectionsInfo) {
+                this.connectionsInfo[id].ready = false;
+            }
+        }
+    }
+
+    addConnection(conn) {
+        const connectionId = uuid.v4();
+        this.connections[connectionId] = conn;
+        this.connectionsInfo[connectionId] = { ready: false };
+
+        conn.on('data', message => {
+            try {
+                message = JSON.parse(message);
+            } catch(err) {
+                logger.error('Failed to parse message: ' + message);
+                return;
+            }
+
+            if (this.STATES.SERVER.init === message.type) {
+                logger.info({connectionId}, this.STATES.SERVER.init);
+
+                this.send(conn, {
+                    type  : this.STATES.SERVER.setTime,
+                    value : this.currentTime
+                });
+            }
+
+            if (this.STATES.SERVER.play === message.type ||
+                this.STATES.SERVER.pause === message.type
+            ) {
+                this.sendToOthers(connectionId, {
+                    type: message.type
+                });
+            }
+
+            if (this.STATES.SERVER.updateTimeInfo === message.type) {
+                this.updateTimes(message.value);
+            }
+
+            if (this.STATES.SERVER.setTime === message.type) {
+                this.currentState = this.STATES.SERVER.waiting;
+
+                this.sendToOthers(connectionId, {
+                    type  : this.STATES.SERVER.setTime,
+                    value : message.value
+                });
+            }
+
+            if (this.STATES.SERVER.ready === message.type) {
+                this.registerParticipant(connectionId);
+            }
+        });
+
+        conn.on('close', () => {
+            delete this.connections[connectionId];
+        });
+    }
+
+    sendToAll(data) {
+        logger.info({name: 'sendToAll'}, data);
+
+        for (let id in connections)
+            this.connections[id].write(JSON.stringify(data));
+    }
+
+    sendToOthers(sourceId, data) {
+        logger.info({name: 'sendToOthers', sourceId}, data);
+
+        for (let id in this.connections) {
+            if (id != sourceId) {
+                this.connections[id].write(JSON.stringify(data));
+            }
+        }
+    }
+
+    send(connection, data) {
+        logger.info({name: 'send', connection}, data);
+
+        connection.write(JSON.stringify(data));
+    }
+
+    updateTimes(newTime) {
+        this.currentTime = newTime + 5;
     }
 }
 
-function send(connection, data) {
-    connection.write(JSON.stringify(data));
-}
 
 // function updateTimes(newTime) {
 //     times.push(newTime + 5);
@@ -61,55 +179,13 @@ function send(connection, data) {
 //     logger.info({times, currentTime}, 'update times info');
 // }
 
-function updateTimes(newTime) {
-    currentTime = newTime + 5;
-}
 
 const sockServer = sockjs.createServer();
+const playerServer = new PlayerServer();
 sockServer.on('connection', conn => {
-    const connectionId = uuid.v4();
-    connections[connectionId] = conn;
-
-    conn.on('data', message => {
-        try {
-            message = JSON.parse(message);
-        } catch(err) {
-            logger.error('Failed to parse message: ' + message);
-            return;
-        }
-
-        if (message.type === 'updateTimeInfo') {
-            updateTimes(message.value);
-        }
-
-        if (message.type === 'play' || message.type === 'pause') {
-            sendToOthers(connectionId, {
-                type: message.type
-            });
-        }
-
-        if (message.type === 'setTime') {
-            sendToOthers(conn, {
-                type  : 'setTime',
-                value : message.value
-            });
-        }
-
-        if (message.type === 'init') {
-            logger.info({connectionId}, 'init');
-
-            send(conn, {
-                type  : 'setTime',
-                value : currentTime
-            });
-        }
-    });
-
-    conn.on('close', () => {
-        delete connections[connectionId];
-    });
+    playerServer.addConnection(conn);
 });
 
-const server = http.createServer();
-sockServer.installHandlers(server, { prefix: '/echo' });
-server.listen(1234, '127.0.0.1');
+const httpServer = http.createServer();
+sockServer.installHandlers(httpServer, { prefix: '/echo' });
+httpServer.listen(1234, '127.0.0.1');

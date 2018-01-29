@@ -7,9 +7,9 @@ function socketOpened(reconnectInterval, updateTimeInterval, sock) {
 
     clearInterval(reconnectInterval);
 
-    sock.send({
-        type: 'init'
-    });
+    // sock.send({
+    //     type: 'init'
+    // });
 
     updateTimeInterval = setInterval(function() {
         sock.send({
@@ -19,19 +19,65 @@ function socketOpened(reconnectInterval, updateTimeInterval, sock) {
     }, 5000);
 }
 
-var playListener;
-var pauseListener;
-var seekingListener;
+function LOG(info) {
+    console.log(`>>> ${new Date()}  ${info}`);
+};
+
+var STATES = {
+    PLAYER: {
+        play: 'play',
+        pause: 'pause',
+        seeking: 'seeking',
+        seeked: 'seeked',
+    },
+    SERVER: {
+        play: 'play',
+        pause: 'pause',
+        setTime: 'setTime',
+        ready: 'ready',
+        init: 'init',
+        updateTimeInfo: 'updateTimeInfo',
+    },
+};
+
+var LISTENERS = {
+    play: function(event) {
+        sock.send({
+            type: 'play'
+        });
+    },
+    pause: function(event) {
+        sock.send({
+            type: 'pause'
+        });
+    },
+    seeking: function(event) {
+        LOG('seeking');
+
+        sock.send({
+            type  : STATES.SERVER.setTime,
+            value : player.currentTime
+        });
+    },
+    seeked: function() {
+        LOG('seeked');
+
+        sock.send({
+            type: STATES.SERVER.ready,
+        });
+    },
+};
+
 var setTimeByServer = false;
 
-function removeSeekingListener() {
-    if (seekingListener)
-        player.removeEventListener('seeking', seekingListener);
+function removeStateListener(state) {
+    if (LISTENERS[state])
+        player.removeEventListener(state, LISTENERS[state]);
 }
 
-function addSeekingListener() {
-    if (seekingListener)
-        player.addEventListener('seeking', seekingListener);
+function addStateListener(state) {
+    if (LISTENERS[state])
+        player.addEventListener(state, LISTENERS[state]);
 }
 
 function socketMessage(event) {
@@ -46,17 +92,27 @@ function socketMessage(event) {
         return;
     }
 
-    if (action.type === 'pause')
+    if (STATES.SERVER.pause === action.type)
         player.pause();
 
-    if (action.type === 'play')
+    if (STATES.SERVER.play === action.type)
         player.play();
 
-    if (action.type === 'setTime') {
-        removeSeekingListener();
+    if (STATES.SERVER.setTime === action.type) {
+        LOG('Got a setTime event');
+
+        removeStateListener(STATES.PLAYER.seeking);
+        player.pause();
         player.currentTime = action.value;
-        setTimeout(() => addSeekingListener(), 500);
-        // addSeekingListener();
+        // TODO: place back on a ready event
+        // setTimeout(() => addStateListener(STATES.PLAYER.seeking), 0);
+    }
+
+    if (STATES.SERVER.ready === action.type) {
+        LOG('Got a ready event');
+
+        player.play();
+        addStateListener(STATES.PLAYER.seeking);
     }
 }
 
@@ -90,36 +146,15 @@ function socketLogic() {
         socketClosed(reconnectInterval, updateTimeInterval, sock);
     };
 
-    if (playListener)
-        player.removeEventListener('play', playListener);
+    removeStateListener(STATES.PLAYER.play);
+    removeStateListener(STATES.PLAYER.pause);
+    removeStateListener(STATES.PLAYER.seeking);
+    removeStateListener(STATES.PLAYER.seeked);
 
-    if (pauseListener)
-        player.removeEventListener('pause', pauseListener);
-
-    removeSeekingListener();
-
-    playListener = function(event) {
-        sock.send({
-            type: 'play'
-        });
-    };
-    pauseListener = function(event) {
-        sock.send({
-            type: 'pause'
-        });
-    };
-    seekingListener = function(event) {
-        sock.send({
-            type  : 'setTime',
-            value : player.currentTime
-        });
-        // TODO
-        console.log('seeking');
-    };
-
-    player.addEventListener('play', playListener);
-    player.addEventListener('pause', pauseListener);
-    addSeekingListener();
+    addStateListener(STATES.PLAYER.play);
+    addStateListener(STATES.PLAYER.pause);
+    addStateListener(STATES.PLAYER.seeking);
+    addStateListener(STATES.PLAYER.seeked);
 }
 
 $(document).ready(function() {
@@ -150,10 +185,10 @@ $(document).ready(function() {
     //     });
     // }
     playlistArray.push({
-       name: 'Some GoPro shit',
+       name: 'Some video',
        duration: 0,
        sources: [{
-           src: '/media/gopro.mp4',
+           src: '/media/matt_tom.mp4',
            type: 'video/mp4'
        }],
     });
@@ -173,21 +208,6 @@ $(document).ready(function() {
             player.paused
                 ? player.play()
                 : player.pause();
-        }
-    });
-
-    $('.he_fucked_up').on('click', this, function() {
-        var $this     = $(this);
-        var $controls = $('.controls').removeClass('hidden');
-
-        if ($this.hasClass('hide')) {
-            $this.text('If no fucking thing is working');
-            $this.removeClass('hide');
-            $controls.addClass('hidden');
-        } else {
-            $this.text('Hide controls');
-            $this.addClass('hide');
-            $('.controls').removeClass('hidden');
         }
     });
 
