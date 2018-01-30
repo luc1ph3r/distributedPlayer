@@ -25,6 +25,7 @@ class PlayerServer {
                 ready: 'ready',
                 init: 'init',
                 updateTimeInfo: 'updateTimeInfo',
+                waiting: 'waiting',
             },
         };
 
@@ -41,6 +42,9 @@ class PlayerServer {
     }
 
     registerParticipant(connectionId) {
+        if (this.STATES.SERVER.waiting !== this.currentState)
+            return;
+
         logger.info({name: 'registerParticipant', connectionId});
 
         if (!this.connectionsInfo[connectionId].ready) {
@@ -52,7 +56,7 @@ class PlayerServer {
 
         logger.info({
             numberOfParticipants,
-            numberOfReadyParticipants: this.nubmerOfReadyParticipants,
+            numberOfReadyParticipants: this.numberOfReadyParticipants,
         });
 
         if (this.numberOfReadyParticipants >= numberOfParticipants) {
@@ -63,6 +67,7 @@ class PlayerServer {
             });
 
             this.currentState = null;
+            this.numberOfReadyParticipants = 0;
             for (let id in this.connectionsInfo) {
                 this.connectionsInfo[id].ready = false;
             }

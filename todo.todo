@@ -26,4 +26,5 @@ Ideas:
          ☐ then changing video's current time (through controllers), it starts "shaking"
        UX:
    Backend:
+        ☐ Got a pause event after sending it, when shouldn't
    Both:

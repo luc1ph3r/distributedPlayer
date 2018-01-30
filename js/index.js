@@ -58,12 +58,15 @@ var LISTENERS = {
     seeking: function(event) {
         LOG('Sending a seeking event');
 
+        removeStateListener(STATES.PLAYER.pause);
+
+        player.pause();
         sock.send({
             type  : STATES.SERVER.setTime,
             value : player.currentTime
         });
 
-        player.pause();
+        addStateListener(STATES.PLAYER.pause);
     },
     seeked: function() {
         LOG('Sending a seeked event');
@@ -102,13 +105,16 @@ function socketMessage(event) {
         removeStateListener(STATES.PLAYER.pause);
         player.pause();
         addStateListener(STATES.PLAYER.pause);
+
+        // setTimeout(() => {
+        //     player.pause();
+
+        //     setTimeout(() => addStateListener(STATES.PLAYER.pause));
+        // });
     }
 
     if (STATES.SERVER.play === action.type) {
         LOG('Got a play event');
-
-        // TODO: WHY doesn't it work without sending all commands
-        // to the end of the event loop?
 
         removeStateListener(STATES.PLAYER.play);
         player.play()
@@ -120,10 +126,12 @@ function socketMessage(event) {
         LOG('Got a setTime event');
 
         removeStateListener(STATES.PLAYER.seeking);
+        removeStateListener(STATES.PLAYER.pause);
+
         player.pause();
         player.currentTime = action.value;
-        // TODO: place back on a ready event
-        // setTimeout(() => addStateListener(STATES.PLAYER.seeking), 0);
+
+        addStateListener(STATES.PLAYER.pause);
     }
 
     if (STATES.SERVER.ready === action.type) {
@@ -207,7 +215,7 @@ $(document).ready(function() {
        name: 'Some video',
        duration: 0,
        sources: [{
-           src: '/media/god.mp4',
+           src: '/media/gopro.mp4',
            type: 'video/mp4'
        }],
     });
