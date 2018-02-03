@@ -91,7 +91,7 @@ class PlayerServer {
                 logger.info({connectionId}, 'Got an init event');
 
                 this.send(connectionId, {
-                    type  : this.STATES.SERVER.setTime,
+                    type  : this.STATES.SERVER.init,
                     value : this.currentTime
                 });
             }
@@ -154,10 +154,10 @@ class PlayerServer {
         }
     }
 
-    send(connection, data) {
-        logger.info({name: 'send', connection}, data);
+    send(connectionId, data) {
+        logger.info({name: 'send', connectionId}, data);
 
-        connection.write(JSON.stringify(data));
+        this.connections[connectionId].write(JSON.stringify(data));
     }
 
     updateTimes(newTime) {

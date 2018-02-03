@@ -1,15 +1,15 @@
 var sockURL = 'http://' + document.location.hostname + '/echo';
 var player;
 
-function socketOpened(reconnectInterval, updateTimeInterval, sock) {
+function socketOpened(reconnectInterval, updateTimeInterval) {
     $('#connectionState').text('connected');
     $('#connectionState').css('color', 'green');
 
     clearInterval(reconnectInterval);
 
-    // sock.send({
-    //     type: 'init'
-    // });
+    sock.send({
+        type: STATES.PLAYER.init,
+    });
 
     updateTimeInterval = setInterval(function() {
         sock.send({
@@ -23,12 +23,14 @@ function LOG(info) {
     console.log(`>>> ${new Date()}  ${info}`);
 };
 
+var currentState;
 var STATES = {
     PLAYER: {
         play: 'play',
         pause: 'pause',
         seeking: 'seeking',
         seeked: 'seeked',
+        init: 'init',
     },
     SERVER: {
         play: 'play',
@@ -71,6 +73,12 @@ var LISTENERS = {
     seeked: function() {
         LOG('Sending a seeked event');
 
+        if (STATES.PLAYER.init === currentState) {
+            addStateListener(STATES.PLAYER.seeking);
+            addStateListener(STATES.PLAYER.seeked);
+            currentState = null;
+        }
+
         sock.send({
             type: STATES.SERVER.ready,
         });
@@ -105,12 +113,6 @@ function socketMessage(event) {
         removeStateListener(STATES.PLAYER.pause);
         player.pause();
         addStateListener(STATES.PLAYER.pause);
-
-        // setTimeout(() => {
-        //     player.pause();
-
-        //     setTimeout(() => addStateListener(STATES.PLAYER.pause));
-        // });
     }
 
     if (STATES.SERVER.play === action.type) {
@@ -141,9 +143,20 @@ function socketMessage(event) {
         .then(() => addStateListener(STATES.PLAYER.seeking))
         .catch(err => addStateListener(STATES.PLAYER.seeking));
     }
+
+    if (STATES.SERVER.init === action.type) {
+        LOG('Got an init event');
+
+        removeStateListener(STATES.PLAYER.seeking);
+        removeStateListener(STATES.PLAYER.seeked);
+
+        player.currentTime = action.value;
+        currentState = STATES.PLAYER.init;
+        // player.play();
+    }
 }
 
-function socketClosed(reconnectInterval, updateTimeInterval, sock) {
+function socketClosed(reconnectInterval, updateTimeInterval) {
     $('#connectionState').text('not connected');
     $('#connectionState').css('color', 'red');
 
@@ -164,13 +177,13 @@ function socketLogic() {
     var reconnectInterval;
 
     sock.onopen = function() {
-        socketOpened(reconnectInterval, updateTimeInterval, sock);
+        socketOpened(reconnectInterval, updateTimeInterval);
     };
     sock.onmessage = function(event) {
         socketMessage(event);
     };
     sock.onclose = function() {
-        socketClosed(reconnectInterval, updateTimeInterval, sock);
+        socketClosed(reconnectInterval, updateTimeInterval);
     };
 
     removeStateListener(STATES.PLAYER.play);
