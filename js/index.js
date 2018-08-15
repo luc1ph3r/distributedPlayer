@@ -20,8 +20,18 @@ function socketOpened(reconnectInterval, updateTimeInterval) {
 }
 
 function LOG(info) {
-    console.log(`>>> ${new Date()}  ${info}`);
+    console.log(`>>> ${Date.now()}  ${info}`);
 };
+
+function isPlaying() {
+    return !player.paused && !player.ended && player.readyState > 2;
+}
+
+function pauseVideo() {
+    player.pause();
+    while (isPlaying())
+        ;
+}
 
 var currentState;
 var STATES = {
@@ -58,36 +68,48 @@ var LISTENERS = {
         });
     },
     seeking: function(event) {
-        LOG('Sending a seeking event');
+        if (STATES.PLAYER.init === currentState)
+          return;
 
         removeStateListener(STATES.PLAYER.pause);
+        removeStateListener(STATES.PLAYER.play);
+        removeStateListener(STATES.PLAYER.seeking);
 
-        player.pause();
-        sock.send({
-            type  : STATES.SERVER.setTime,
-            value : player.currentTime
+        LOG('Sending a seeking event');
+
+        setTimeout(() => {
+          pauseVideo();
+
+          addStateListener(STATES.PLAYER.pause);
+          addStateListener(STATES.PLAYER.play);
+
+          sock.send({
+              type  : STATES.SERVER.setTime,
+              value : player.currentTime
+          });
         });
-
-        addStateListener(STATES.PLAYER.pause);
     },
     seeked: function() {
-        LOG('Sending a seeked event');
-
         if (STATES.PLAYER.init === currentState) {
-            addStateListener(STATES.PLAYER.seeking);
-            addStateListener(STATES.PLAYER.seeked);
-            currentState = null;
+          LOG('Init, seekd');
+          currentState = null;
+          return;
         }
+
+        LOG('Sending a seeked event');
 
         sock.send({
             type: STATES.SERVER.ready,
         });
+
+        addStateListener(STATES.PLAYER.seeking);
     },
 };
 
 var setTimeByServer = false;
 
 function removeStateListener(state) {
+    LOG('Removing ' + state + ' listener');
     player.removeEventListener(state, LISTENERS[state]);
 }
 
@@ -130,10 +152,12 @@ function socketMessage(event) {
         removeStateListener(STATES.PLAYER.seeking);
         removeStateListener(STATES.PLAYER.pause);
 
-        player.pause();
-        player.currentTime = action.value;
+        setTimeout(() => {
+            pauseVideo();
+            player.currentTime = action.value;
 
-        addStateListener(STATES.PLAYER.pause);
+            addStateListener(STATES.PLAYER.pause);
+        });
     }
 
     if (STATES.SERVER.ready === action.type) {
@@ -147,8 +171,8 @@ function socketMessage(event) {
     if (STATES.SERVER.init === action.type) {
         LOG('Got an init event');
 
-        removeStateListener(STATES.PLAYER.seeking);
-        removeStateListener(STATES.PLAYER.seeked);
+        // removeStateListener(STATES.PLAYER.seeking);
+        // removeStateListener(STATES.PLAYER.seeked);
 
         player.currentTime = action.value;
         currentState = STATES.PLAYER.init;
@@ -205,33 +229,80 @@ $(document).ready(function() {
     });
 
     var playlistArray = [];
-    // for (var i = 3; i != 14; ++i) {
-    //     playlistArray.push({
-    //         name: 'Made In Abyss ' + i,
-    //         duration: 0,
-    //         sources: [{
-    //             src: '/media/mia/' + i + '.mp4',
-    //             type: 'video/mp4'
-    //         }],
-    //         textTracks:[{
-    //             kind: 'captions',
-    //             label: 'Russian',
-    //             src: '/media/mia/' + i + '.vtt',
-    //             default: true
-    //         }],
-    //         thumbnail: [{
-    //             src: '/media/mia/abyssbanner.jpg'
-    //         }]
-    //     });
-    // }
-    playlistArray.push({
-       name: 'Some video',
-       duration: 0,
-       sources: [{
-           src: '/media/gopro.mp4',
-           type: 'video/mp4'
-       }],
-    });
+
+    for (var i = 2; i != 3; ++i) {
+        playlistArray.push({
+            name: 'Gumball ' + i,
+            duration: 0,
+            sources: [{
+                src: '/media/gumball_1_' + i + '.mkv',
+                type: 'video/mp4'
+            }],
+            thumbnail: [{
+                src: '/media/gumball.jpg'
+            }]
+        });
+    }
+
+    for (var i = 1; i != 10; ++i) {
+        playlistArray.push({
+            name: 'Everlet Garden ' + i,
+            duration: 0,
+            sources: [{
+                src: '/media/evergarden_' + i + '.mkv',
+                type: 'video/mp4'
+            }],
+            textTracks:[{
+                kind: 'captions',
+                label: 'Russian',
+                src: '/media/evergarden_' + i + '.vtt',
+                default: true
+            }],
+            thumbnail: [{
+                src: '/media/evergarden.jpeg'
+            }]
+        });
+    }
+
+    for (var i = 1; i != 3; ++i) {
+        playlistArray.push({
+            name: 'Attack on Titan ' + i,
+            duration: 0,
+            sources: [{
+                src: '/media/shingeki_3_' + i + '.mkv',
+                type: 'video/mp4'
+            }],
+            textTracks:[{
+                kind: 'captions',
+                label: 'Russian',
+                src: '/media/shingeki_3_' + i + '.vtt',
+                default: true
+            }],
+            thumbnail: [{
+                src: '/media/shingeki.jpg'
+            }]
+        });
+    }
+
+    for (var i = 1; i != 4; ++i) {
+        playlistArray.push({
+            name: 'Tamako Market ' + i,
+            duration: 0,
+            sources: [{
+                src: '/media/tamako_market_' + i + '.mkv',
+                type: 'video/mp4'
+            }],
+            textTracks:[{
+                kind: 'captions',
+                label: 'Russian',
+                src: '/media/tamako_market_' + i + '.vtt',
+                default: true
+            }],
+            thumbnail: [{
+                src: '/media/tamako_market.jpg'
+            }]
+        });
+    }
 
     playerObject.playlistUi({className: 'vjs-playlist'});
     playerObject.playlist(playlistArray);
