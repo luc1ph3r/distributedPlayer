@@ -230,79 +230,31 @@ $(document).ready(function() {
 
     var playlistArray = [];
 
-    for (var i = 2; i != 3; ++i) {
-        playlistArray.push({
-            name: 'Gumball ' + i,
-            duration: 0,
-            sources: [{
-                src: '/media/gumball_1_' + i + '.mkv',
-                type: 'video/mp4'
-            }],
-            thumbnail: [{
-                src: '/media/gumball.jpg'
-            }]
-        });
-    }
+    playlistArray.push({
+        name: 'Dance',
+        // duration: 0, // in seconds
+        sources: [{
+            src: 'media/dance.mp4',
+            type: 'video/mp4'
+        }],
+        // textTracks:[{
+        //     kind: 'captions',
+        //     label: 'Russian',
+        //     src: '/media/evergarden_' + i + '.vtt',
+        //     default: true
+        // }],
+        // thumbnail: [{
+        //     src: '/media/evergarden.jpeg'
+        // }]
+    });
 
-    for (var i = 1; i != 10; ++i) {
-        playlistArray.push({
-            name: 'Everlet Garden ' + i,
-            duration: 0,
-            sources: [{
-                src: '/media/evergarden_' + i + '.mkv',
-                type: 'video/mp4'
-            }],
-            textTracks:[{
-                kind: 'captions',
-                label: 'Russian',
-                src: '/media/evergarden_' + i + '.vtt',
-                default: true
-            }],
-            thumbnail: [{
-                src: '/media/evergarden.jpeg'
-            }]
-        });
-    }
-
-    for (var i = 1; i != 3; ++i) {
-        playlistArray.push({
-            name: 'Attack on Titan ' + i,
-            duration: 0,
-            sources: [{
-                src: '/media/shingeki_3_' + i + '.mkv',
-                type: 'video/mp4'
-            }],
-            textTracks:[{
-                kind: 'captions',
-                label: 'Russian',
-                src: '/media/shingeki_3_' + i + '.vtt',
-                default: true
-            }],
-            thumbnail: [{
-                src: '/media/shingeki.jpg'
-            }]
-        });
-    }
-
-    for (var i = 1; i != 4; ++i) {
-        playlistArray.push({
-            name: 'Tamako Market ' + i,
-            duration: 0,
-            sources: [{
-                src: '/media/tamako_market_' + i + '.mkv',
-                type: 'video/mp4'
-            }],
-            textTracks:[{
-                kind: 'captions',
-                label: 'Russian',
-                src: '/media/tamako_market_' + i + '.vtt',
-                default: true
-            }],
-            thumbnail: [{
-                src: '/media/tamako_market.jpg'
-            }]
-        });
-    }
+    playlistArray.push({
+        name: 'Dance 2',
+        sources: [{
+            src: 'media/dance.mp4',
+            type: 'video/mp4'
+        }],
+    });
 
     playerObject.playlistUi({className: 'vjs-playlist'});
     playerObject.playlist(playlistArray);
