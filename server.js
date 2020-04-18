@@ -52,14 +52,14 @@ class PlayerServer {
             this.connectionsInfo[connectionId].ready = true;
         }
 
-        const numberOfParticipants = Object.keys(this.connections).length;
+        const participantsCnt = numberOfParticipants();
 
         logger.info({
-            numberOfParticipants,
+            participantsCnt,
             numberOfReadyParticipants: this.numberOfReadyParticipants,
         });
 
-        if (this.numberOfReadyParticipants >= numberOfParticipants) {
+        if (this.numberOfReadyParticipants >= participantsCnt) {
             logger.info('Sending a ready event to clients');
 
             this.sendToAll({
@@ -72,6 +72,10 @@ class PlayerServer {
                 this.connectionsInfo[id].ready = false;
             }
         }
+    }
+
+    numberOfParticipants() {
+        return Object.keys(this.connections).length;
     }
 
     addConnection(conn) {
@@ -197,6 +201,18 @@ class PlayerServer {
 //     logger.info({times, currentTime}, 'update times info');
 // }
 
+function metricsHandlerFactory(provider) {
+    function metricsHandler(req, res) {
+        metrics = {
+            connectionsCnt: provider.numberOfParticipants(),
+        };
+
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(metrics));
+    }
+
+    return metricsHandler;
+}
 
 const sockServer = sockjs.createServer();
 const playerServer = new PlayerServer();
@@ -207,3 +223,5 @@ sockServer.on('connection', conn => {
 const httpServer = http.createServer();
 sockServer.installHandlers(httpServer, { prefix: '/echo' });
 httpServer.listen(1234, '127.0.0.1');
+
+const metricsServer = http.createServer(metricsHandlerFactory(playerServer)).listen(1235);

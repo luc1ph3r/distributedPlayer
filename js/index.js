@@ -1,4 +1,6 @@
-var sockURL = 'http://' + document.location.hostname + '/echo';
+var sockURL = 'http://'
+            + document.location.hostname + ':' + document.location.port
+            + '/echo';
 var player;
 
 function socketOpened(reconnectInterval, updateTimeInterval) {
@@ -290,4 +292,20 @@ $(document).ready(function() {
             value : nextTime
         });
     });
+
+    (function updateMetrics() {
+        let cnt = $('#connectionsCnt');
+
+        fetch('/metrics')
+            .then(res => res.json())
+            .then(metrics => {
+                cnt.text(metrics.connectionsCnt);
+            })
+            .catch(() => {
+                cnt.text('unknown');
+            })
+            .finally(() => {
+                setTimeout(updateMetrics, 3000);
+            });
+    })();
 });
