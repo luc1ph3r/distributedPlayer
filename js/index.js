@@ -3,6 +3,8 @@ var sockURL = 'http://'
             + (document.location.port ? (':' + document.location.port) : '')
             + '/echo';
 var player;
+var playerObject;
+var isDebug = false;
 
 function socketOpened(reconnectInterval, updateTimeInterval) {
     $('#connectionState').text('connected');
@@ -23,7 +25,9 @@ function socketOpened(reconnectInterval, updateTimeInterval) {
 }
 
 function LOG(info) {
-    console.log(`>>> ${Date.now()}  ${info}`);
+    if (isDebug) {
+        console.log(`>>> ${Date.now()}  ${info}`);
+    }
 };
 
 function isPlaying() {
@@ -224,8 +228,12 @@ function socketLogic() {
     addStateListener(STATES.PLAYER.seeked);
 }
 
+function makeLocalUrl(path) {
+    return String(document.location) + path;
+}
+
 $(document).ready(function() {
-    var playerObject = videojs(document.querySelector('.video-js'), {
+    playerObject = videojs(document.querySelector('.video-js'), {
         fluid: true
     }, function() {
         // video is initialized
