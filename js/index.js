@@ -58,6 +58,7 @@ var STATES = {
         updateTimeInfo: 'updateTimeInfo',
         updatePlaylist: 'updatePlaylist',
         getMetrics: 'getMetrics',
+        newIdx: 'newIdx',
     },
 };
 
@@ -113,6 +114,14 @@ var LISTENERS = {
 
         addStateListener(STATES.PLAYER.seeking);
     },
+    playlistitem: function() {
+        const idx = playerObject.playlist.currentItem();
+
+        sock.send({
+            type: 'newIdx',
+            value: idx,
+        });
+    }
 };
 
 var setTimeByServer = false;
@@ -195,9 +204,22 @@ function socketMessage(event) {
     }
 
     if (STATES.SERVER.getMetrics === action.type) {
-        LOG('Got an getMetrics event');
+        LOG('Got a getMetrics event');
 
         updateMetrics(action.value);
+    }
+
+    if (STATES.SERVER.newIdx === action.type) {
+        LOG('Got a newIdx event');
+
+        removeStateListener(STATES.PLAYER.playlistitem);
+
+        playerObject.playlist.currentItem(action.value);
+        // playerObject.play();
+
+        setTimeout(() => {
+            addStateListener(STATES.SERVER.playlistitem);
+        });
     }
 }
 
@@ -246,7 +268,7 @@ function makeLocalUrl(path) {
     return String(document.location) + path;
 }
 
-function updatePlaylist() {
+function updatePlaylist(callback) {
     fetch('/media/playlist.json')
     .then(res => {
         if (res.ok) {
@@ -266,6 +288,10 @@ function updatePlaylist() {
 
         playerObject.playlist(playlistArray);
         playerObject.playlist.currentItem(0);
+
+        if (callback) {
+            callback();
+        }
     })
     .catch(err => {
         $('.vjs-playlist').text(`Failed to get the playlist: ${err}`)
@@ -292,12 +318,21 @@ $(document).ready(function() {
         // video is initialized
     });
 
-    playerObject.playlistUi({className: 'vjs-playlist', playOnSelect: true});
+    playerObject.playlistUi({className: 'vjs-playlist', playOnSelect: false});
 
     // Play through the playlist automatically.
     playerObject.playlist.autoadvance(0);
 
-    updatePlaylist();
+    updatePlaylist(() => {
+        playerObject.on('playlistitem', () => {
+            const idx = playerObject.playlist.currentItem();
+
+            sock.send({
+                type: 'newIdx',
+                value: idx,
+            });
+        });
+    });
 
     player = document.querySelector('#player video');
     socketLogic();

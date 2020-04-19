@@ -28,6 +28,7 @@ class PlayerServer {
                 waiting: 'waiting',
                 updatePlaylist: 'updatePlaylist',
                 getMetrics: 'getMetrics',
+                newIdx: 'newIdx',
             },
         };
 
@@ -151,6 +152,15 @@ class PlayerServer {
                     value: {
                         cnt: this.numberOfParticipants(),
                     }
+                });
+            }
+
+            if (this.STATES.SERVER.newIdx === message.type) {
+                logger.info({connectionId}, 'Got a newIdx event');
+
+                this.sendToOthers(connectionId, {
+                    type: this.STATES.SERVER.newIdx,
+                    value: message.value,
                 });
             }
         });
