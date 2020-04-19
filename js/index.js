@@ -56,6 +56,7 @@ var STATES = {
         ready: 'ready',
         init: 'init',
         updateTimeInfo: 'updateTimeInfo',
+        updatePlaylist: 'updatePlaylist',
     },
 };
 
@@ -185,6 +186,12 @@ function socketMessage(event) {
         currentState = STATES.PLAYER.init;
         // player.play();
     }
+
+    if (STATES.SERVER.updatePlaylist === action.type) {
+        LOG('Got an updatePlaylist event');
+
+        updatePlaylist();
+    }
 }
 
 function socketClosed(reconnectInterval, updateTimeInterval) {
@@ -255,6 +262,13 @@ function updatePlaylist() {
     })
     .catch(err => {
         $('.vjs-playlist').text(`Failed to get the playlist: ${err}`)
+    });
+}
+
+// TODO: probably not for production purposes
+function initiatePlaylistUpdate() {
+    sock.send({
+        type  : 'updatePlaylist',
     });
 }
 

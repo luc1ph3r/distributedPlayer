@@ -26,6 +26,7 @@ class PlayerServer {
                 init: 'init',
                 updateTimeInfo: 'updateTimeInfo',
                 waiting: 'waiting',
+                updatePlaylist: 'updatePlaylist',
             },
         };
 
@@ -132,6 +133,14 @@ class PlayerServer {
 
                 this.registerParticipant(connectionId);
             }
+
+            if (this.STATES.SERVER.updatePlaylist === message.type) {
+                logger.info({connectionId}, 'Got an updatePlaylist event');
+
+                this.sendToOthers(connectionId, {
+                    type: this.STATES.SERVER.updatePlaylist,
+                });
+            }
         });
 
         conn.on('close', () => {
@@ -143,8 +152,9 @@ class PlayerServer {
     sendToAll(data) {
         logger.info({name: 'sendToAll'}, data);
 
-        for (let id in this.connections)
+        for (let id in this.connections) {
             this.connections[id].write(JSON.stringify(data));
+        }
     }
 
     sendToOthers(sourceId, data) {
