@@ -258,7 +258,7 @@ $(document).ready(function() {
         }],
     });
 
-    playerObject.playlistUi({className: 'vjs-playlist'});
+    playerObject.playlistUi({className: 'vjs-playlist', playOnSelect: true});
     playerObject.playlist(playlistArray);
 
     // Play through the playlist automatically.
