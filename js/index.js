@@ -1,5 +1,6 @@
 var sockURL = 'http://'
-            + document.location.hostname + ':' + document.location.port
+            + document.location.hostname
+            + (document.location.port ? (':' + document.location.port) : '')
             + '/echo';
 var player;
 
