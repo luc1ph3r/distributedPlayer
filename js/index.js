@@ -239,39 +239,25 @@ $(document).ready(function() {
         // video is initialized
     });
 
-    var playlistArray = [];
-
-    playlistArray.push({
-        name: 'Dance',
-        // duration: 0, // in seconds
-        sources: [{
-            src: 'media/dance.mp4',
-            type: 'video/mp4'
-        }],
-        // textTracks:[{
-        //     kind: 'captions',
-        //     label: 'Russian',
-        //     src: '/media/evergarden_' + i + '.vtt',
-        //     default: true
-        // }],
-        // thumbnail: [{
-        //     src: '/media/evergarden.jpeg'
-        // }]
-    });
-
-    playlistArray.push({
-        name: 'Dance 2',
-        sources: [{
-            src: 'media/dance.mp4',
-            type: 'video/mp4'
-        }],
-    });
-
     playerObject.playlistUi({className: 'vjs-playlist', playOnSelect: true});
-    playerObject.playlist(playlistArray);
 
     // Play through the playlist automatically.
     playerObject.playlist.autoadvance(0);
+
+    fetch('/media/playlist.json')
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`${res.status} (${res.statusText})`);
+            }
+        })
+        .then(playlistArray => {
+            playerObject.playlist(playlistArray);
+        })
+        .catch(err => {
+            $('.vjs-playlist').text(`Failed to get the playlist: ${err}`)
+        });
 
     player = document.querySelector('#player video');
     socketLogic();
