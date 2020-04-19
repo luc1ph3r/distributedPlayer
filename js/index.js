@@ -297,7 +297,7 @@ $(document).ready(function() {
                 cnt.text(metrics.connectionsCnt);
             })
             .catch(() => {
-                cnt.text('unknown');
+                cnt.text('error');
             })
             .finally(() => {
                 setTimeout(updateMetrics, 3000);
