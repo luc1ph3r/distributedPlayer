@@ -19,32 +19,48 @@
     <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
-    <section class="player" id="player">
-        <video class="video-js" preload="auto" tabindex="-1" controls="">
-        </video>
-        <div class="playlist-container">
-            <ol class="vjs-playlist"></ol>
+    <div class="content-top">
+        <div class="col-9" id="player-container">
+            <div class="player-outside">
+                <div class="player-inside">
+                    <div id="player">
+                        <video class="video-js" preload="auto" tabindex="-1" controls="">
+                        </video>
+                    </div>
+                </div>
+            </div>
         </div>
-    </section>
 
-    <div class="controls">
-        <!-- Go to time: <input id="goToTimeInput" type="text" placeholder="HH:MM:SS"> -->
-        <!-- <button id="goToTimeBtn"> -->
-        <!--     Set time for all members -->
-        <!-- </button> -->
-    </div>
-    <div class="info">
-        <div>
-            current state:
-            <span id="connectionState" style="color: red;">
-                not connected
-            </span>
+        <!-- <div class="controls"> -->
+        <!--     Go to time: <input id="goToTimeInput" type="text" placeholder="HH:MM:SS"> -->
+        <!--     <button id="goToTimeBtn"> -->
+        <!--         Set time for all members -->
+        <!--     </button> -->
+        <!-- </div> -->
+
+        <div class="col-3" id="playlist-container">
+            <div class="playlist-outside">
+                <div class="playlist-inside">
+                    <ol class="vjs-playlist"></ol>
+                </div>
+            </div>
         </div>
-        <div>
-            online:
-            <span id="connectionsCnt" style="color: blue">
-                unknown
-            </span>
+    </div>
+
+    <div class="content-bottom">
+        <div class="info">
+            <div>
+                current state:
+                <span id="connectionState" style="color: red;">
+                    not connected
+                </span>
+            </div>
+            <div>
+                online:
+                <span id="connectionsCnt" style="color: blue">
+                    ...
+                </span>
+            </div>
         </div>
     </div>
 </body>
