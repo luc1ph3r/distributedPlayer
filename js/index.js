@@ -253,6 +253,14 @@ $(document).ready(function() {
             }
         })
         .then(playlistArray => {
+            for (let item of playlistArray) {
+                for (let source of item.sources) {
+                    if (!source.src.startsWith('http')) {
+                        source.src = makeLocalUrl(source.src);
+                    }
+                }
+            }
+
             playerObject.playlist(playlistArray);
         })
         .catch(err => {
