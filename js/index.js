@@ -232,6 +232,32 @@ function makeLocalUrl(path) {
     return String(document.location) + path;
 }
 
+function updatePlaylist() {
+    fetch('/media/playlist.json')
+    .then(res => {
+        if (res.ok) {
+            return res.json();
+        } else {
+            throw new Error(`${res.status} (${res.statusText})`);
+        }
+    })
+    .then(playlistArray => {
+        for (let item of playlistArray) {
+            for (let source of item.sources) {
+                if (!source.src.startsWith('http')) {
+                    source.src = makeLocalUrl(source.src);
+                }
+            }
+        }
+
+        playerObject.playlist(playlistArray);
+        playerObject.playlist.currentItem(0);
+    })
+    .catch(err => {
+        $('.vjs-playlist').text(`Failed to get the playlist: ${err}`)
+    });
+}
+
 $(document).ready(function() {
     playerObject = videojs(document.querySelector('.video-js'), {
         fluid: true
@@ -244,28 +270,7 @@ $(document).ready(function() {
     // Play through the playlist automatically.
     playerObject.playlist.autoadvance(0);
 
-    fetch('/media/playlist.json')
-        .then(res => {
-            if (res.ok) {
-                return res.json();
-            } else {
-                throw new Error(`${res.status} (${res.statusText})`);
-            }
-        })
-        .then(playlistArray => {
-            for (let item of playlistArray) {
-                for (let source of item.sources) {
-                    if (!source.src.startsWith('http')) {
-                        source.src = makeLocalUrl(source.src);
-                    }
-                }
-            }
-
-            playerObject.playlist(playlistArray);
-        })
-        .catch(err => {
-            $('.vjs-playlist').text(`Failed to get the playlist: ${err}`)
-        });
+    updatePlaylist();
 
     player = document.querySelector('#player video');
     socketLogic();
@@ -300,15 +305,15 @@ $(document).ready(function() {
         let cnt = $('#connectionsCnt');
 
         fetch('/metrics')
-            .then(res => res.json())
-            .then(metrics => {
-                cnt.text(metrics.connectionsCnt);
-            })
-            .catch(() => {
-                cnt.text('error');
-            })
-            .finally(() => {
-                setTimeout(updateMetrics, 3000);
-            });
+        .then(res => res.json())
+        .then(metrics => {
+            cnt.text(metrics.connectionsCnt);
+        })
+        .catch(() => {
+            cnt.text('error');
+        })
+        .finally(() => {
+            setTimeout(updateMetrics, 3000);
+        });
     })();
 });
