@@ -10,12 +10,12 @@
   "license": "ISC",
   "dependencies": {
     "bunyan": "^1.8.8",
-    "sockjs": "^0.3.19",
-    "uuid": "^3.0.1"
+    "sockjs": "^0.3.20",
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "video.js": "^5.19.1",
+    "video.js": "^5.20.5",
     "videojs-playlist": "^3.1.0",
-    "videojs-playlist-ui": "^3.0.3"
-  }
+    "videojs-playlist-ui": "^3.7.0"
+  },
 }
