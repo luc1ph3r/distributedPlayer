@@ -57,6 +57,7 @@ var STATES = {
         init: 'init',
         updateTimeInfo: 'updateTimeInfo',
         updatePlaylist: 'updatePlaylist',
+        getMetrics: 'getMetrics',
     },
 };
 
@@ -192,6 +193,12 @@ function socketMessage(event) {
 
         updatePlaylist();
     }
+
+    if (STATES.SERVER.getMetrics === action.type) {
+        LOG('Got an getMetrics event');
+
+        updateMetrics(action.value);
+    }
 }
 
 function socketClosed(reconnectInterval, updateTimeInterval) {
@@ -265,6 +272,12 @@ function updatePlaylist() {
     });
 }
 
+function updateMetrics(metrics) {
+    if (metrics.cnt) {
+        $('#connectionsCnt').text(metrics.cnt);
+    }
+}
+
 // TODO: probably not for production purposes
 function initiatePlaylistUpdate() {
     sock.send({
@@ -315,19 +328,13 @@ $(document).ready(function() {
         });
     });
 
-    (function updateMetrics() {
-        let cnt = $('#connectionsCnt');
+    (function getMetrics() {
+        setTimeout(() => {
+            sock.send({
+                type: 'getMetrics',
+            });
 
-        fetch('/metrics')
-        .then(res => res.json())
-        .then(metrics => {
-            cnt.text(metrics.connectionsCnt);
-        })
-        .catch(() => {
-            cnt.text('error');
-        })
-        .finally(() => {
-            setTimeout(updateMetrics, 3000);
-        });
+            getMetrics();
+        }, 3000);
     })();
 });

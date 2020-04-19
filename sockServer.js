@@ -27,6 +27,7 @@ class PlayerServer {
                 updateTimeInfo: 'updateTimeInfo',
                 waiting: 'waiting',
                 updatePlaylist: 'updatePlaylist',
+                getMetrics: 'getMetrics',
             },
         };
 
@@ -53,7 +54,7 @@ class PlayerServer {
             this.connectionsInfo[connectionId].ready = true;
         }
 
-        const participantsCnt = numberOfParticipants();
+        const participantsCnt = this.numberOfParticipants();
 
         logger.info({
             participantsCnt,
@@ -139,6 +140,17 @@ class PlayerServer {
 
                 this.sendToOthers(connectionId, {
                     type: this.STATES.SERVER.updatePlaylist,
+                });
+            }
+
+            if (this.STATES.SERVER.getMetrics === message.type) {
+                logger.info({connectionId}, 'Got an getMetrics event');
+
+                this.send(connectionId, {
+                    type: this.STATES.SERVER.getMetrics,
+                    value: {
+                        cnt: this.numberOfParticipants(),
+                    }
                 });
             }
         });
