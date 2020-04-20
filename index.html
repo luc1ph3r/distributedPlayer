@@ -48,18 +48,41 @@
     </div>
 
     <div class="content-bottom">
-        <div class="info">
-            <div>
-                current state:
-                <span id="connectionState" style="color: red;">
-                    not connected
-                </span>
+        <div class="col-9">
+            <div class="active-area">
+                <div id="info">
+                    <span id="counter">
+                        online:
+                        <span id="connectionsCnt">
+                            ...
+                        </span>
+                    </span>
+                </div>
+                <div id="chat">
+                    <div id="messages">
+                        <div id="no-messages">
+                            <p>no messages yet</p>
+                        </div>
+                        <ul>
+                            <!-- <li> -->
+                            <!--     <div class="message"> -->
+                            <!--         <p class="message-author">template</p> -->
+                            <!--         <p class="message-text">message</p> -->
+                            <!--         <p class="message-time">time</p> -->
+                            <!--     </div> -->
+                            <!-- </li> -->
+                        </ul>
+                    </div>
+
+                    <div id="form">
+                        <!-- <textarea id="chat-name" rows="2" placeholder="your name..."></textarea> -->
+                        <textarea id="message-typing" rows="2" placeholder="write a message..."></textarea>
+                    </div>
+                </div>
             </div>
-            <div>
-                online:
-                <span id="connectionsCnt" style="color: blue">
-                    ...
-                </span>
+        </div>
+        <div class="col-3">
+            <div id="stats">
             </div>
         </div>
     </div>

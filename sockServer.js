@@ -29,6 +29,7 @@ class PlayerServer {
                 updatePlaylist: 'updatePlaylist',
                 getMetrics: 'getMetrics',
                 newIdx: 'newIdx',
+                message: 'message',
             },
         };
 
@@ -160,6 +161,15 @@ class PlayerServer {
 
                 this.sendToOthers(connectionId, {
                     type: this.STATES.SERVER.newIdx,
+                    value: message.value,
+                });
+            }
+
+            if (this.STATES.SERVER.message === message.type) {
+                logger.info({connectionId}, 'Got a message event');
+
+                this.sendToOthers(connectionId, {
+                    type: this.STATES.SERVER.message,
                     value: message.value,
                 });
             }

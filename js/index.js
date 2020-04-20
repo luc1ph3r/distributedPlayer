@@ -4,11 +4,11 @@ var sockURL = 'http://'
             + '/echo';
 var player;
 var playerObject;
+var nickname;
 var isDebug = false;
 
 function socketOpened(reconnectInterval, updateTimeInterval) {
     $('#connectionState').text('connected');
-    $('#connectionState').css('color', 'green');
 
     clearInterval(reconnectInterval);
 
@@ -59,6 +59,7 @@ var STATES = {
         updatePlaylist: 'updatePlaylist',
         getMetrics: 'getMetrics',
         newIdx: 'newIdx',
+        message: 'message',
     },
 };
 
@@ -221,12 +222,17 @@ function socketMessage(event) {
             addStateListener(STATES.SERVER.playlistitem);
         });
     }
+
+    if (STATES.SERVER.message === action.type) {
+        LOG('Got a message event');
+
+        const msg = action.value;
+        const time = (new Date(msg.ts * 1000)).toISOString();
+        addMessage(msg.author, msg.text, time);
+    }
 }
 
 function socketClosed(reconnectInterval, updateTimeInterval) {
-    $('#connectionState').text('not connected');
-    $('#connectionState').css('color', 'red');
-
     clearInterval(updateTimeInterval);
     setTimeout(socketLogic, 1000);
 }
@@ -311,6 +317,41 @@ function initiatePlaylistUpdate() {
     });
 }
 
+function createMessage(author, text, time) {
+    let message = $('<div class="message"></div>');
+    // TODO: prevent injections!
+    $('<p class="message-author">' + author + '</p>').appendTo(message);
+    $('<p class="message-text">' + text + '</p>').appendTo(message);
+    $('<p class="message-time">' + time + '</p>').appendTo(message);
+
+    return message;
+}
+
+function addMessage(author, text, time) {
+    if (0 === $('#messages>ul>li').length) {
+        $('#no-messages').css('display', 'none');
+    }
+
+    createMessage(author, text, time).appendTo('#messages>ul');
+}
+
+function sendMessage(text) {
+    const dt = (new Date());
+    const time = dt.toISOString();
+    const ts = dt.getTime() / 1000;
+
+    addMessage(nickname, text, time);
+
+    sock.send({
+        type: 'message',
+        value: {
+            author: nickname,
+            text: text,
+            ts: ts,
+        }
+    });
+}
+
 $(document).ready(function() {
     playerObject = videojs(document.querySelector('.video-js'), {
         fluid: true
@@ -363,11 +404,46 @@ $(document).ready(function() {
         });
     });
 
+    $('#message-typing').keydown(function (e) {
+        const isEnter = event.keyCode == 10 || event.keyCode == 13;
+        const isCtrlOrCommand = event.metaKey || event.ctrlKey;
+
+        if (isCtrlOrCommand && isEnter) {
+            if (undefined === nickname
+             || null === nickname
+             || 0 === nickname.length
+            ) {
+                nickname = prompt('Type your nickname: ');
+
+                if (null === nickname) {
+                    return;
+                }
+
+                if (0 === nickname.length) {
+                    alert('nickname cannot be empty');
+                    return;
+                }
+            }
+
+            let textarea = document.getElementById('message-typing');
+            const text = textarea.value;
+
+            sendMessage(text);
+
+            textarea.value = '';
+        }
+    });
+
     (function getMetrics() {
         setTimeout(() => {
-            sock.send({
-                type: 'getMetrics',
-            });
+            try {
+                sock.send({
+                    type: 'getMetrics',
+                });
+            } catch (err) {
+                $('#connectionsCnt').text('error');
+                console.log(err);
+            }
 
             getMetrics();
         }, 3000);
