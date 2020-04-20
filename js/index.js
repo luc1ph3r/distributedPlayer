@@ -227,8 +227,7 @@ function socketMessage(event) {
         LOG('Got a message event');
 
         const msg = action.value;
-        const time = (new Date(msg.ts * 1000)).toISOString();
-        addMessage(msg.author, msg.text, time);
+        addMessage(msg.author, msg.text, msg.ts);
     }
 }
 
@@ -327,20 +326,22 @@ function createMessage(author, text, time) {
     return message;
 }
 
-function addMessage(author, text, time) {
+function addMessage(author, text, ts) {
     if (0 === $('#messages>ul>li').length) {
         $('#no-messages').css('display', 'none');
     }
+
+    const dt = new Date(ts);
+    const tzOffset = dt.getTimezoneOffset() * 60000;
+    const time = (new Date(ts - tzOffset)).toISOString();
 
     createMessage(author, text, time).appendTo('#messages>ul');
 }
 
 function sendMessage(text) {
-    const dt = (new Date());
-    const time = dt.toISOString();
-    const ts = dt.getTime() / 1000;
+    const ts = Date.now();
 
-    addMessage(nickname, text, time);
+    addMessage(nickname, text, ts);
 
     sock.send({
         type: 'message',
