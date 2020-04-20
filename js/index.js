@@ -48,6 +48,7 @@ var STATES = {
         seeking: 'seeking',
         seeked: 'seeked',
         init: 'init',
+        playlistitem: 'playlistitem',
     },
     SERVER: {
         play: 'play',
@@ -116,24 +117,40 @@ var LISTENERS = {
         addStateListener(STATES.PLAYER.seeking);
     },
     playlistitem: function() {
-        const idx = playerObject.playlist.currentItem();
+        // fix for Yandex Browser
+        // otherwise currentItem() returns a value before a change
+        setTimeout(() => {
+            const idx = playerObject.playlist.currentItem();
+            console.log(idx);
 
-        sock.send({
-            type: 'newIdx',
-            value: idx,
-        });
-    }
+            sock.send({
+                type: 'newIdx',
+                value: idx,
+            });
+        }, 0);
+    },
 };
 
 var setTimeByServer = false;
 
 function removeStateListener(state) {
     LOG('Removing ' + state + ' listener');
-    player.removeEventListener(state, LISTENERS[state]);
+
+    if (STATES.PLAYER.playlistitem === state) {
+        playerObject.off(state);
+    } else {
+        player.removeEventListener(state, LISTENERS[state]);
+    }
 }
 
 function addStateListener(state) {
-    player.addEventListener(state, LISTENERS[state]);
+    LOG('Adding ' + state + ' listener');
+
+    if (STATES.PLAYER.playlistitem === state) {
+        playerObject.on(state, LISTENERS[state]);
+    } else {
+        player.addEventListener(state, LISTENERS[state]);
+    }
 }
 
 function socketMessage(event) {
@@ -219,7 +236,7 @@ function socketMessage(event) {
         // playerObject.play();
 
         setTimeout(() => {
-            addStateListener(STATES.SERVER.playlistitem);
+            addStateListener(STATES.PLAYER.playlistitem);
         });
     }
 
@@ -366,14 +383,7 @@ $(document).ready(function() {
     playerObject.playlist.autoadvance(0);
 
     updatePlaylist(() => {
-        playerObject.on('playlistitem', () => {
-            const idx = playerObject.playlist.currentItem();
-
-            sock.send({
-                type: 'newIdx',
-                value: idx,
-            });
-        });
+        addStateListener(STATES.PLAYER.playlistitem);
     });
 
     player = document.querySelector('#player video');
