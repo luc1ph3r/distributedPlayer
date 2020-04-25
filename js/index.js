@@ -374,6 +374,11 @@ $(document).ready(function() {
     playerObject = videojs(document.querySelector('.video-js'), {
         fluid: true,
         techOrder: ['html5', 'youtube'],
+        youtube: {
+            cc_lang_pref: 'en',
+            cc_load_policy: 1,
+            ytControls: 0,
+        },
     }, function() {
         // video is initialized
     });
