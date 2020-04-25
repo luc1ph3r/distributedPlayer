@@ -291,7 +291,7 @@ function makeLocalUrl(path) {
 }
 
 function updatePlaylist(callback) {
-    fetch('/media/playlist.json')
+    fetch('/playlist/get')
     .then(res => {
         if (res.ok) {
             return res.json();
@@ -449,6 +449,21 @@ $(document).ready(function() {
 
             textarea.value = '';
         }
+    });
+
+    $('#add-url-button').click(() => {
+        // TODO: validate!
+        const urlVal = $('#add-url-input').val();
+
+        fetch("/playlist/add", {
+            method: "POST",
+            body: JSON.stringify({url: urlVal})
+        }).then(res => {
+            if (res.ok) {
+                updatePlaylist();
+                initiatePlaylistUpdate();
+            }
+        });
     });
 
     (function getMetrics() {
