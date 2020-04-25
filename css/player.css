@@ -16,13 +16,12 @@
 
 .playlist-container {
     flex: 1 3 30%;
-    height: 100%;
+    height: 90%;
     overflow-y: auto;
 }
 
 .vjs-playlist {
     margin: 0;
-    height: 100%;
 }
 
 .vjs_video_3-dimensions.vjs-fluid {

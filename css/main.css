@@ -66,6 +66,37 @@ body {
     left: 0;
     height: 100%;
     width: 100%;
+    display: flex;
+    flex-flow: column;
+    background: #1a1a1a;
+}
+
+.playlist-inside > ol {
+    padding-left: 0;
+}
+
+#playlist-controls {
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+}
+
+#add-url-input {
+    border: none;
+    background: #3d3d3d;
+    color: white;
+    padding: 0.3em 0.3em 0.3em 0.3em;
+}
+
+#add-url-input {
+    width: 85%;
+}
+
+#add-url-button {
+    width: 10%;
+}
+
+.vjs-playlist {
+    flex-grow: 1;
 }
 
 .active-area {
@@ -96,6 +127,10 @@ body {
     list-style: none;
     padding-left: 0;
     padding-right: 0;
+}
+
+#message-typing {
+    border: none;
 }
 
 .message > p {
