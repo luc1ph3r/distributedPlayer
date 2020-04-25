@@ -372,7 +372,8 @@ function sendMessage(text) {
 
 $(document).ready(function() {
     playerObject = videojs(document.querySelector('.video-js'), {
-        fluid: true
+        fluid: true,
+        techOrder: ['html5', 'youtube'],
     }, function() {
         // video is initialized
     });
