@@ -354,6 +354,7 @@ $(document).ready(function() {
             cc_lang_pref: 'en',
             cc_load_policy: 1,
             ytControls: 0,
+            autoplay: 0,
         },
     }, function() {
         // video is initialized
@@ -362,7 +363,7 @@ $(document).ready(function() {
     playerObj.playlistUi({className: 'vjs-playlist', playOnSelect: false});
 
     // Play through the playlist automatically.
-    playerObj.playlist.autoadvance(1);
+    playerObj.playlist.autoadvance(0);
 
     updatePlaylist(() => {
         addStateListener(STATES.PLAYER.playlistitem);
