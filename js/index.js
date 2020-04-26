@@ -3,9 +3,10 @@ var sockURL = 'http://'
             + (document.location.port ? (':' + document.location.port) : '')
             + '/echo';
 var player;
-var playerObject;
+var playerObj;
 var nickname;
 var isDebug = false;
+var currentState;
 
 function socketOpened(reconnectInterval, updateTimeInterval) {
     $('#connectionState').text('connected');
@@ -19,7 +20,7 @@ function socketOpened(reconnectInterval, updateTimeInterval) {
     updateTimeInterval = setInterval(function() {
         sock.send({
             type  : 'updateTimeInfo',
-            value : player.currentTime
+            value : playerObj.currentTime(),
         });
     }, 5000);
 }
@@ -31,24 +32,23 @@ function LOG(info) {
 };
 
 function isPlaying() {
-    return !player.paused && !player.ended && player.readyState > 2;
+    return !playerObj.paused && !playerObj.ended() && playerObj.readyState() > 2;
 }
 
 function pauseVideo() {
-    player.pause();
+    playerObj.pause();
     while (isPlaying())
         ;
 }
 
-var currentState;
 var STATES = {
     PLAYER: {
         play: 'play',
         pause: 'pause',
-        seeking: 'seeking',
         seeked: 'seeked',
         init: 'init',
         playlistitem: 'playlistitem',
+        setTime: 'setTime',
     },
     SERVER: {
         play: 'play',
@@ -79,49 +79,37 @@ var LISTENERS = {
             type: 'pause'
         });
     },
-    seeking: function(event) {
-        if (STATES.PLAYER.init === currentState)
-          return;
-
-        removeStateListener(STATES.PLAYER.pause);
-        removeStateListener(STATES.PLAYER.play);
-        removeStateListener(STATES.PLAYER.seeking);
-
-        LOG('Sending a seeking event');
-
-        setTimeout(() => {
-          pauseVideo();
-
-          addStateListener(STATES.PLAYER.pause);
-          addStateListener(STATES.PLAYER.play);
-
-          sock.send({
-              type  : STATES.SERVER.setTime,
-              value : player.currentTime
-          });
-        });
-    },
     seeked: function() {
         if (STATES.PLAYER.init === currentState) {
-          LOG('Init, seekd');
-          currentState = null;
-          return;
+            LOG('Init, seeked');
+            currentState = null;
+            return;
+        } else if (STATES.PLAYER.setTime === currentState) {
+            LOG('Sending a seeked event');
+
+            sock.send({
+                type: STATES.SERVER.ready,
+            });
+        } else {
+            removeStateListener(STATES.PLAYER.pause);
+            removeStateListener(STATES.PLAYER.play);
+
+            LOG('Sending a setTime event');
+
+            pauseVideo();
+            currentState = STATES.PLAYER.setTime;
+
+            sock.send({
+                type  : STATES.SERVER.setTime,
+                value : playerObj.currentTime(),
+            });
         }
-
-        LOG('Sending a seeked event');
-
-        sock.send({
-            type: STATES.SERVER.ready,
-        });
-
-        addStateListener(STATES.PLAYER.seeking);
     },
     playlistitem: function() {
         // fix for Yandex Browser
         // otherwise currentItem() returns a value before a change
         setTimeout(() => {
-            const idx = playerObject.playlist.currentItem();
-            console.log(idx);
+            const idx = playerObj.playlist.currentItem();
 
             sock.send({
                 type: 'newIdx',
@@ -136,21 +124,13 @@ var setTimeByServer = false;
 function removeStateListener(state) {
     LOG('Removing ' + state + ' listener');
 
-    if (STATES.PLAYER.playlistitem === state) {
-        playerObject.off(state);
-    } else {
-        player.removeEventListener(state, LISTENERS[state]);
-    }
+    playerObj.off(state, LISTENERS[state]);
 }
 
 function addStateListener(state) {
     LOG('Adding ' + state + ' listener');
 
-    if (STATES.PLAYER.playlistitem === state) {
-        playerObject.on(state, LISTENERS[state]);
-    } else {
-        player.addEventListener(state, LISTENERS[state]);
-    }
+    playerObj.on(state, LISTENERS[state]);
 }
 
 function socketMessage(event) {
@@ -169,7 +149,7 @@ function socketMessage(event) {
         LOG('Got a pause event');
 
         removeStateListener(STATES.PLAYER.pause);
-        player.pause();
+        playerObj.pause();
         addStateListener(STATES.PLAYER.pause);
     }
 
@@ -177,42 +157,39 @@ function socketMessage(event) {
         LOG('Got a play event');
 
         removeStateListener(STATES.PLAYER.play);
-        player.play()
-        .then(() => addStateListener(STATES.PLAYER.play))
-        .catch(err => addStateListener(STATES.PLAYER.play));
+        playerObj.play();
+        addStateListener(STATES.PLAYER.play);
     }
 
     if (STATES.SERVER.setTime === action.type) {
         LOG('Got a setTime event');
 
-        removeStateListener(STATES.PLAYER.seeking);
+        currentState = STATES.PLAYER.setTime;
+
         removeStateListener(STATES.PLAYER.pause);
+        removeStateListener(STATES.PLAYER.play);
 
-        setTimeout(() => {
-            pauseVideo();
-            player.currentTime = action.value;
-
-            addStateListener(STATES.PLAYER.pause);
-        });
+        pauseVideo();
+        playerObj.currentTime(action.value);
     }
 
     if (STATES.SERVER.ready === action.type) {
         LOG('Got a ready event');
 
-        player.play()
-        .then(() => addStateListener(STATES.PLAYER.seeking))
-        .catch(err => addStateListener(STATES.PLAYER.seeking));
+        currentState = null;
+
+        playerObj.play();
+        addStateListener(STATES.PLAYER.play);
+        addStateListener(STATES.PLAYER.pause);
     }
 
     if (STATES.SERVER.init === action.type) {
         LOG('Got an init event');
 
-        // removeStateListener(STATES.PLAYER.seeking);
-        // removeStateListener(STATES.PLAYER.seeked);
+        removeStateListener(STATES.PLAYER.seeked);
 
-        player.currentTime = action.value;
-        currentState = STATES.PLAYER.init;
-        // player.play();
+        playerObj.currentTime(action.value);
+        addStateListener(STATES.PLAYER.seeked);
     }
 
     if (STATES.SERVER.updatePlaylist === action.type) {
@@ -232,8 +209,7 @@ function socketMessage(event) {
 
         removeStateListener(STATES.PLAYER.playlistitem);
 
-        playerObject.playlist.currentItem(action.value);
-        // playerObject.play();
+        playerObj.playlist.currentItem(action.value);
 
         setTimeout(() => {
             addStateListener(STATES.PLAYER.playlistitem);
@@ -277,12 +253,10 @@ function socketLogic() {
 
     removeStateListener(STATES.PLAYER.play);
     removeStateListener(STATES.PLAYER.pause);
-    removeStateListener(STATES.PLAYER.seeking);
     removeStateListener(STATES.PLAYER.seeked);
 
     addStateListener(STATES.PLAYER.play);
     addStateListener(STATES.PLAYER.pause);
-    addStateListener(STATES.PLAYER.seeking);
     addStateListener(STATES.PLAYER.seeked);
 }
 
@@ -308,8 +282,8 @@ function updatePlaylist(callback) {
             }
         }
 
-        playerObject.playlist(playlistArray);
-        playerObject.playlist.currentItem(0);
+        playerObj.playlist(playlistArray);
+        playerObj.playlist.currentItem(0);
 
         if (callback) {
             callback();
@@ -371,7 +345,7 @@ function sendMessage(text) {
 }
 
 $(document).ready(function() {
-    playerObject = videojs(document.querySelector('.video-js'), {
+    playerObj = videojs(document.querySelector('.video-js'), {
         fluid: true,
         techOrder: ['html5', 'youtube'],
         youtube: {
@@ -383,10 +357,10 @@ $(document).ready(function() {
         // video is initialized
     });
 
-    playerObject.playlistUi({className: 'vjs-playlist', playOnSelect: false});
+    playerObj.playlistUi({className: 'vjs-playlist', playOnSelect: false});
 
     // Play through the playlist automatically.
-    playerObject.playlist.autoadvance(0);
+    playerObj.playlist.autoadvance(1);
 
     updatePlaylist(() => {
         addStateListener(STATES.PLAYER.playlistitem);
@@ -398,9 +372,9 @@ $(document).ready(function() {
     $('#player').keypress(function(e) {
         if (e.which === 32) { // space
             e.preventDefault();
-            player.paused
-                ? player.play()
-                : player.pause();
+            playerObj.paused()
+                ? playerObj.play()
+                : playerObj.pause();
         }
     });
 

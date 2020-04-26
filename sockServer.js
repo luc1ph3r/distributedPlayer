@@ -14,7 +14,6 @@ class PlayerServer {
             PLAYER: {
                 play: 'play',
                 pause: 'pause',
-                seeking: 'seeking',
                 seeked: 'seeked',
                 ready: 'ready',
             },
@@ -46,8 +45,9 @@ class PlayerServer {
     }
 
     registerParticipant(connectionId) {
-        if (this.STATES.SERVER.waiting !== this.currentState)
+        if (this.STATES.SERVER.waiting !== this.currentState) {
             return;
+        }
 
         logger.info({name: 'registerParticipant', connectionId});
 
@@ -124,6 +124,7 @@ class PlayerServer {
                 logger.info({connectionId}, 'Got a setTime event');
 
                 this.currentState = this.STATES.SERVER.waiting;
+                this.registerParticipant(connectionId);
 
                 this.sendToOthers(connectionId, {
                     type  : this.STATES.SERVER.setTime,
