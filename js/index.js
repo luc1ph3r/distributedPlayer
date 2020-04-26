@@ -352,7 +352,6 @@ $(document).ready(function() {
         techOrder: ['html5', 'youtube'],
         youtube: {
             cc_lang_pref: 'en',
-            cc_load_policy: 1,
             ytControls: 0,
             autoplay: 0,
         },
