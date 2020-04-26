@@ -27,12 +27,13 @@ class PlayerServer {
                 waiting: 'waiting',
                 updatePlaylist: 'updatePlaylist',
                 getMetrics: 'getMetrics',
-                newIdx: 'newIdx',
+                playlistItem: 'playlistItem',
                 message: 'message',
             },
         };
 
         this.currentTime = 0;
+        this.currentPlaylistIdx = 0;
         this.times = [];
         this.connections = {};
         this.connectionsInfo = {};
@@ -100,7 +101,10 @@ class PlayerServer {
 
                 this.send(connectionId, {
                     type  : this.STATES.SERVER.init,
-                    value : this.currentTime
+                    value : {
+                        time: this.currentTime,
+                        playlistIdx: this.currentPlaylistIdx,
+                    },
                 });
             }
 
@@ -157,11 +161,13 @@ class PlayerServer {
                 });
             }
 
-            if (this.STATES.SERVER.newIdx === message.type) {
-                logger.info({connectionId}, 'Got a newIdx event');
+            if (this.STATES.SERVER.playlistItem === message.type) {
+                logger.info({connectionId}, 'Got a playlistItem event');
+
+                this.currentPlaylistIdx = message.value;
 
                 this.sendToOthers(connectionId, {
-                    type: this.STATES.SERVER.newIdx,
+                    type: this.STATES.SERVER.playlistItem,
                     value: message.value,
                 });
             }

@@ -59,8 +59,8 @@ var STATES = {
         updateTimeInfo: 'updateTimeInfo',
         updatePlaylist: 'updatePlaylist',
         getMetrics: 'getMetrics',
-        newIdx: 'newIdx',
         message: 'message',
+        playlistItem: 'playlistItem',
     },
 };
 
@@ -112,7 +112,7 @@ var LISTENERS = {
             const idx = playerObj.playlist.currentItem();
 
             sock.send({
-                type: 'newIdx',
+                type: STATES.SERVER.playlistItem,
                 value: idx,
             });
         }, 0);
@@ -188,7 +188,9 @@ function socketMessage(event) {
 
         removeStateListener(STATES.PLAYER.seeked);
 
-        playerObj.currentTime(action.value);
+        playerObj.currentTime(action.value.time);
+        playerObj.playlist.currentItem(action.value.playlistIdx);
+
         addStateListener(STATES.PLAYER.seeked);
     }
 
@@ -204,8 +206,8 @@ function socketMessage(event) {
         updateMetrics(action.value);
     }
 
-    if (STATES.SERVER.newIdx === action.type) {
-        LOG('Got a newIdx event');
+    if (STATES.SERVER.playlistItem === action.type) {
+        LOG('Got a playlistItem event');
 
         removeStateListener(STATES.PLAYER.playlistitem);
 
