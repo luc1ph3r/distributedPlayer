@@ -354,6 +354,7 @@ $(document).ready(function() {
             cc_lang_pref: 'en',
             ytControls: 0,
             autoplay: 0,
+            modestbranding: 1,
         },
     }, function() {
         // video is initialized
